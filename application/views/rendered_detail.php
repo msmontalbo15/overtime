@@ -1,0 +1,2 @@
+<h5><b>Project Details</b><a class="btn btn-xs btn-outline-secondary float-right" download="<?php echo $details->ref_no . '.png'; ?>" href="<?php echo base_url("img/good/qrcode/$details->good_id.png"); ?>"><span class="fas fa-print"></span>
+		QR-Code</a></h5>

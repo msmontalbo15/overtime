@@ -1,0 +1,41 @@
+# ============================================================
+# Overtime App — .gitignore
+# Owner: Mark Spencer Montalbo
+# https://github.com/msmontalbo15/overtime
+# ============================================================
+
+# --- LICENSE KEY (never commit this — required for activation) ---
+license.key
+
+# --- Database config (contains credentials) ---
+application/config/database.php
+
+# --- Sensitive config ---
+.env
+*.env
+
+# --- Uploaded user images (generated at runtime) ---
+assets/images/logo_*
+assets/images/icon_*
+
+# --- System / OS ---
+Thumbs.db
+.DS_Store
+Desktop.ini
+
+# --- IDE ---
+.vscode/
+.idea/
+
+# --- PHP logs & cache ---
+*.log
+application/logs/*.log
+application/cache/*
+!application/cache/index.html
+
+# --- Node / Composer ---
+node_modules/
+vendor/
+.env.license
+encrypt_credentials.php
+license.cache

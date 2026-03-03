@@ -1,0 +1,21 @@
+#for not direct access
+Options All -Indexes
+<FilesMatch "\.(?i:gif|jpe?g|jpg|png|ico|css|js|swf|woff2|woff)$">
+
+  <IfModule mod_headers.c>
+    Header set Cache-Control "max-age=2628000, public, must-revalidate"
+  </IfModule>
+
+</FilesMatch>
+
+<IfModule mod_rewrite.c>
+  RewriteEngine on
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule ^(.*)$ index.php?/$1 [L]
+</IfModule>
+
+<IfModule !mod_rewrite.c>
+  ErrorDocument 404 /index.php
+</IfModule>
+
