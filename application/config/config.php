@@ -39,7 +39,7 @@ if ($env) {
 // $url = 'http://dco.synology.me/dcu/overtime/';
 $url = 'http://localhost/overtime/';
 
-$config['base_url'] = $url;
+$config['base_url'] = getenv('RAILWAY_STATIC_URL') ?: '';
 /*
 |--------------------------------------------------------------------------
 | Index File
