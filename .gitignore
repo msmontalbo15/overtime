@@ -37,5 +37,5 @@ application/cache/*
 node_modules/
 vendor/
 .env.license
-# encrypt_credentials.php
+encrypt_credentials.php
 license.cache

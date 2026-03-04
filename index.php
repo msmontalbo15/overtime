@@ -2,6 +2,23 @@
 
 date_default_timezone_set("Asia/Manila");
 
+// ── Load .env file for local development (XAMPP) ─────────────────────────────
+// On Railway, vars are injected automatically — this block is safely skipped.
+// On XAMPP, create a .env file in the project root with your 3 variables.
+// Never commit .env to git (already in .gitignore).
+(function() {
+    $env_file = __DIR__ . '/.env';
+    if (!file_exists($env_file)) return;
+    foreach (file($env_file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $line) {
+        $line = trim($line);
+        if ($line === '' || $line[0] === '#' || strpos($line, '=') === false) continue;
+        [$key, $val] = explode('=', $line, 2);
+        $key = trim($key);
+        $val = trim($val, " \t\n\r\0\x0B\"'");
+        if (!getenv($key)) { putenv("$key=$val"); $_ENV[$key] = $val; }
+    }
+})();
+
 // ============================================================
 // LICENSE VERIFICATION — Supabase RPC, Machine + Domain Locked
 //
@@ -16,51 +33,29 @@ date_default_timezone_set("Asia/Manila");
 // ============================================================
 (function() {
 
-    // ── Load + decrypt credentials from .env.license ─────────────────────
-    // Plaintext credentials are NEVER stored in this file.
-    // Run: php encrypt_credentials.php  (once, from CLI, then delete the script)
+    // ── Credentials — loaded from environment variables ─────────────────
+    // On Railway: set these in your project → Variables tab.
+    // On XAMPP:   set them in .env file in project root (never commit it).
+    // Never hardcode values here.
     (function() {
-        $env_file = __DIR__ . '/.env.license';
+        // Try $_ENV first, then getenv() as fallback (works on Railway + XAMPP)
+        $get = fn($k) => $_ENV[$k] ?? getenv($k) ?: null;
 
-        if (!file_exists($env_file)) {
-            die('<h1 style="font-family:sans-serif;color:#c00;padding:40px">License config missing. Run <code>php encrypt_credentials.php</code>.</h1>');
-        }
-
-        // Parse key=value lines, skip comments
-        $env = [];
-        foreach (file($env_file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $line) {
-            if ($line[0] === '#' || strpos($line, '=') === false) continue;
-            [$k, $v] = explode('=', $line, 2);
-            $env[trim($k)] = trim($v);
-        }
-
-        // Load master key from ABOVE the webroot (cannot be fetched via HTTP)
-        $master_file = $env['MASTER_KEY_PATH'] ?? '';
-        if (!$master_file || !file_exists($master_file)) {
-            die('<h1 style="font-family:sans-serif;color:#c00;padding:40px">License master key not found.<br><small>Path: ' . htmlspecialchars((string)$master_file) . '</small></h1>');
-        }
-
-        $master_key = trim(file_get_contents($master_file));
-        if (strlen($master_key) !== 64) {
-            die('<h1 style="font-family:sans-serif;color:#c00;padding:40px">License master key malformed. Re-run encrypt_credentials.php.</h1>');
-        }
-
-        // AES-256-GCM decrypt: base64(12-byte IV + 16-byte tag + ciphertext)
-        $dec = function($encoded, $key_hex) {
-            $raw = base64_decode($encoded, true);
-            if (!$raw || strlen($raw) < 29) return false;
-            return openssl_decrypt(
-                substr($raw, 28), 'aes-256-gcm', hex2bin($key_hex),
-                OPENSSL_RAW_DATA, substr($raw, 0, 12), substr($raw, 12, 16)
-            );
-        };
-
-        $url    = $dec($env['SUPABASE_URL']          ?? '', $master_key);
-        $anon   = $dec($env['SUPABASE_ANON_KEY']     ?? '', $master_key);
-        $secret = $dec($env['LICENSE_HMAC_SECRET']   ?? '', $master_key);
+        $url    = $get('SUPABASE_URL');
+        $anon   = $get('SUPABASE_ANON_KEY');
+        $secret = $get('LICENSE_HMAC_SECRET');
 
         if (!$url || !$anon || !$secret) {
-            die('<h1 style="font-family:sans-serif;color:#c00;padding:40px">Credential decryption failed. Re-run encrypt_credentials.php.</h1>');
+            $missing = implode(', ', array_filter([
+                !$url    ? 'SUPABASE_URL'        : null,
+                !$anon   ? 'SUPABASE_ANON_KEY'   : null,
+                !$secret ? 'LICENSE_HMAC_SECRET' : null,
+            ]));
+            die('<h1 style="font-family:sans-serif;color:#c00;padding:40px">
+                Missing environment variable(s): <code>' . htmlspecialchars($missing) . '</code><br><br>
+                <strong>Railway:</strong> Go to your project → Variables tab → add the missing vars.<br>
+                <strong>XAMPP:</strong> Create a <code>.env</code> file in the project root with these values.
+            </h1>');
         }
 
         define('SUPABASE_URL',        $url);
