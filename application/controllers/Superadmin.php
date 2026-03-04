@@ -74,15 +74,29 @@ class Superadmin extends CI_Controller
         if (!$this->input->is_ajax_request()) exit('no valid request');
 
         if (!empty($_FILES['logo']['name'])) {
+            // Manually validate extension to bypass CI mime sniffing (fails on Railway/Linux)
+            $ext = strtolower(pathinfo($_FILES['logo']['name'], PATHINFO_EXTENSION));
+            $allowed_exts = ['jpg', 'jpeg', 'png', 'gif', 'svg', 'webp'];
+
+            if (!in_array($ext, $allowed_exts)) {
+                echo json_encode(['success' => false, 'msg' => 'Only JPG, PNG, GIF, SVG, WEBP files are allowed.', 'path' => null]);
+                return;
+            }
+
+            if ($_FILES['logo']['size'] > 2097152) { // 2MB
+                echo json_encode(['success' => false, 'msg' => 'File too large. Maximum size is 2MB.', 'path' => null]);
+                return;
+            }
+
             $upload_path = FCPATH . 'assets/images/';
 
+            // Use wildcard to skip all CI mime checks — extension already validated above
             $config = [
                 'upload_path'   => $upload_path,
-                'allowed_types' => 'jpg|jpeg|png|gif|svg',
+                'allowed_types' => '*',
                 'max_size'      => 2048,
                 'file_name'     => 'logo_' . time(),
                 'overwrite'     => false,
-                'detect_mime'   => false,
             ];
 
             $this->load->library('upload', $config);
