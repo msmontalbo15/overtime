@@ -24,22 +24,13 @@ $env = null;
 |
 */
 
-//$config['base_url'] = 'https://digicomms.synology.me/dcu/overtime/';
-//$config['base_url'] = 'https://localhost/dcu/overtime/';
-//$ipaddress = $_SERVER['REMOTE_ADDR'];
-$ipaddress = "192.168.10.237";
-//$config['base_url'] = 'https://' . $ipaddress . '/dcu/overtime/';
-
-
-if ($env) {
-	$url = 'http://localhost/dcu/overtime/';
-} else {
-	$url = 'http://' . $ipaddress . '/dcu/overtime/';
-}
-// $url = 'http://dco.synology.me/dcu/overtime/';
-$url = 'http://localhost/overtime/';
-
-$config['base_url'] = getenv('RAILWAY_STATIC_URL') ?: '';
+// Auto-detect base_url from the actual request
+// Works on Railway, XAMPP localhost, and any custom domain
+$_protocol = (!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https')
+    ? 'https'
+    : ((!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http');
+$_host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+$config['base_url'] = $_protocol . '://' . $_host . '/';
 /*
 |--------------------------------------------------------------------------
 | Index File
@@ -395,7 +386,7 @@ $config['encryption_key'] = '';
 $config['sess_driver'] = 'files';
 $config['sess_cookie_name'] = 'ci_session';
 $config['sess_expiration'] = 7200;
-$config['sess_save_path'] = NULL;
+$config['sess_save_path'] = '/tmp'; // writable in Docker (Railway)
 $config['sess_match_ip'] = FALSE;
 $config['sess_time_to_update'] = 300;
 $config['sess_regenerate_destroy'] = FALSE;
